@@ -1,0 +1,112 @@
+4) CREATE TWO HIVE PARTITION TABLES TO WHICH ARE SQOOPED FROM MYSQL AND LOAD INCREMENTED DATA DELETE DUPLICATES IN HIVE TABLE 
+create table student(
+id int(10),
+cname varchar(20),
+city varchar(20),
+fee  int(10),
+dept varchar(20)
+ );
+
+
+insert into student(id,cname,city,fee,dept) values (1,'rosy','charlotte','50000','it');
+insert into student(id,cname,city,fee,dept) values (2,'mike','atlanta','60000','ece');
+insert into student(id,cname,city,fee,dept) values (3,'bell','newyork','50000','mech');
+insert into student(id,cname,city,fee,dept) values (4,'benty','missouri','30000','it');
+insert into student(id,cname,city,fee,dept) values (5,'lucy','portland','40000','ece');
+insert into student(id,cname,city,fee,dept) values (6,'kate','chicago','50000','mech');
+insert into student(id,cname,city,fee,dept) values (7,'merdith','dallas','40000','it');
+insert into student(id,cname,city,fee,dept) values (8,'arya','utah','30000','ece');
+insert into student(id,cname,city,fee,dept) values (9,'mona','seattle','20000','mech');
+insert into student(id,cname,city,fee,dept) values (10,'alison','virgina','10000','it');
+insert into student(id,cname,city,fee,dept) values (11,'rosy','charlotte','60000','it');
+insert into student(id,cname,city,fee,dept) values (12,'rosy','charlotte','70000','ece');
+insert into student(id,cname,city,fee,dept) values (13,'rosy','charlotte','60000','it');
+insert into student(id,cname,city,fee,dept) values (14,'benty','missouri','30000','it');
+insert into student(id,cname,city,fee,dept) values (15,'lucy','portland','40000','ece');
+
+
+sqoop import --connect "jdbc:mysql://localhost/mysql_db"  --username root --password cloudera --split-by id  --columns id,cname,city,fee,dept --table student --target-dir home/cloudera/student_hv --fields-terminated-by "," --hive-import --create-hive-table --hive-table sampledata.student_hv
+
+
+insert into student(id,cname,city,fee,dept) values (16,'rosy','charlotte','60000','it');
+insert into student(id,cname,city,fee,dept) values (17,'rosy','charlotte','70000','ece');
+insert into student(id,cname,city,fee,dept) values (18,'rosy','charlotte','60000','it');
+insert into student(id,cname,city,fee,dept) values (19,'benty','missouri','30000','it');
+insert into student(id,cname,city,fee,dept) values (20,'lucy','portland','40000','ece');
+
+#SQOOP ADDITIONAL 5 RECORDS 
+
+sqoop import --connect "jdbc:mysql://localhost/mysql_db" --username root --password cloudera --table student -m 1 --target-dir home/cloudera/student_hv --incremental append --check-column id --last-value 15 --fields-terminated-by "," --hive-import --hive-table sampledata.student_hv
+
+#CREATE PARTITION TABLE IN HIVE
+
+use sampledata;
+drop table if exists student_part;
+create table if not exists student_part(
+id int,
+cname string,
+city string,
+fee int)
+PARTITIONED BY (dept string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+insert into table student_part partition(dept) select * from student_hive order by id;
+
+
+#
+use mysql_db;
+
+create table customers(
+id int(10),
+cname varchar(20),
+city varchar(20),
+sales int(10),
+dept varchar(20)
+);
+
+insert into customers(id,cname,city,sales,dept) values (1,'rosy','charlotte','50000','guess');
+insert into customers(id,cname,city,sales,dept) values (2,'mike','atlanta','60000','tommy');
+insert into customers(id,cname,city,sales,dept) values (3,'bell','newyork','50000','mk');
+insert into customers(id,cname,city,sales,dept) values (4,'benty','missouri','30000','ck');
+insert into customers(id,cname,city,sales,dept) values (5,'lucy','portland','40000','macys');
+insert into customers(id,cname,city,sales,dept) values (6,'kate','chicago','50000','jcpenny');
+insert into customers(id,cname,city,sales,dept) values (7,'merdith','dallas','40000','banana');
+insert into customers(id,cname,city,sales,dept) values (8,'arya','utah','30000','forever');
+insert into customers(id,cname,city,sales,dept) values (9,'mona','seattle','20000','loft');
+insert into customers(id,cname,city,sales,dept) values (10,'alison','virgina','10000','inc');
+
+
+sqoop import --connect "jdbc:mysql://localhost/mysql_db"  --username root --password cloudera --split-by id  --columns id,cname,city,sales,dept --table customers --target-dir home/cloudera/customers --fields-terminated-by "," --hive-import --create-hive-table --hive-table sampledata.customers_hive
+
+
+insert into customers(id,cname,city,sales,dept) values (11,'rosy','charlotte','50000','guess');
+insert into customers(id,cname,city,sales,dept) values (12,'rosy','charlotte','60000','tommy');
+insert into customers(id,cname,city,sales,dept) values (13,'rosy','charlotte','50000','jcpenny');
+insert into customers(id,cname,city,sales,dept) values (14,'benty','missouri','40000','inc');
+insert into customers(id,cname,city,sales,dept) values (15,'lucy','portland','40000','forever');
+
+#SQOOP ADDITIONAL 5 RECORDS 
+
+sqoop import --connect "jdbc:mysql://localhost/mysql_db" --username root --password cloudera --table customers -m 1 --target-dir home/cloudera/customers --incremental append --check-column id --last-value 10 --fields-terminated-by "," --hive-import --hive-table sampledata.customers_hive
+
+#CREATE PARTITION TABLE IN HIVE
+
+use sampledata;
+drop table if exists customers_part;
+create table if not exists customers_part(
+id int,
+cname string,
+city string,
+sales int)
+PARTITIONED BY (dept string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+SET hive.exec.dynamic.partition = true;
+SET hive.exec.dynamic.partition.mode = nonstrict;
+
+insert into table customers_part partition(dept) select distinct cname, sales from customers_hive;
+distinct * from customers_hive;
+
+
+
+

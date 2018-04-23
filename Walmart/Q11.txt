@@ -1,0 +1,9 @@
+url = "jdbc:mysql://localhost/mysql"
+
+tablename = my_table
+
+properties = {"user": MySqlDbUser,"password": MySqldbPass,"driver": com.mysql.jdbc.Driver}
+
+mysql_table_df = sqlContext.read.jdbc(url=url,table=tablename, properties=properties)
+
+mysql_table_df.write.mode("overwrite").format("orc").saveAsTable("default.mysql_table")

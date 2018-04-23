@@ -1,0 +1,89 @@
+3)CREATE ANY TWO TABLES IN MYSQL AND SQOOP THOSE TABLES IN HDFS AND WRITE IT INTO HIVE TABLE (NEEDS TO BE PARTITIONED)
+To enter into mysql 
+mysql -u root -p 
+
+create database mysql_db;
+use mysql_db;
+
+show databases;
+
+create table population_data(
+id int(10),
+country varchar(20),
+city varchar(10),
+state varchar(10),
+dob DATE
+);
+
+
+insert into population_data (id,country,city,state,dob) values (1,'india','hyderabad','telangana','1993-08-22');
+insert into population_data (id,country,city,state,dob) values (2,'usa','charlotte','nc','1992-07-16');
+insert into population_data(id,country,city,state,dob) values (3,'india','secbad','telangana','1991-06-21');
+insert into population_data(id,country,city,state,dob) values (4,'usa','warrensbg','missouri','1993-08-22');
+insert into population_data(id,country,city,state,dob) values (5,'india','secbad','telangana','1993-06-10');
+insert into population_data(id,country,city,state,dob) values (6,'usa','charlotte','nc','1992-06-09');
+insert into population_data(id,country,city,state,dob) values (7,'india','hyderabad','telangana','1992-08-23');
+insert into population_data(id,country,city,state,dob) values (8,'usa','warrensbg','missouri','1993-06-19');
+insert into population_data(id,country,city,state,dob) values (9,'india','secbad','telangana','1993-12-26');
+insert into population_data(id,country,city,state,dob) values (10,'usa','charlotte','nc','1993-08-22');
+
+#SQOOP IMPORT FROM RDBMS TO HDFS : TO HIVE
+
+sqoop import --connect "jdbc:mysql://localhost/mysql_db"  --username root --password cloudera --split-by id  --columns id,country,city,state,dob --table population_data --target-dir /user/home/cloudera/population_test --fields-terminated-by "," --hive-import --create-hive-table --hive-table sampledata.population_data
+
+drop table if exists population_part;
+create table if not exists population_part(
+id int,
+country string,
+city string,
+state string)
+PARTITIONED BY (dob DATE)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+SET hive.exec.dynamic.partition = true;
+SET hive.exec.dynamic.partition.mode = nonstrict;
+
+insert into table population_part partition(dob) select * from population_data;
+------------------------------------------------------------------------------------------------------------------------
+show databases;
+use sampledata;
+show tables;
+
+create table student_data(
+id int (10),
+cname varchar(20),
+city varchar(20),
+dept varchar(20),
+doj DATE
+);
+
+insert into student_data(id,cname,city,dept,doj) values (1,'pandu','hyderabad','it','2012-01-12');
+insert into student_data(id,cname,city,dept,doj) values (2,'chinnu','bangalore','ece','2013-03-14');
+insert into student_data(id,cname,city,dept,doj) values (3,'aishu','chennai','mech','2012-09-22');
+insert into student_data(id,cname,city,dept,doj) values (4,'usha','hyderabad','it','2013-04-18');
+insert into student_data(id,cname,city,dept,doj) values (5,'ishu','bangalore','ece','2012-08-15');
+insert into student_data(id,cname,city,dept,doj) values (6,'navya','chennai','mech','2013-01-19');
+insert into student_data(id,cname,city,dept,doj) values (7,'kavya','hyderabad','it','2012-04-22');
+insert into student_data(id,cname,city,dept,doj) values (8,'preety','bangalore','ece','2013-01-17');
+insert into student_data(id,cname,city,dept,doj) values (9,'sony','chennai','mech','2012-02-14');
+insert into student_data(id,cname,city,dept,doj) values (10,'vaishu','hyderabad','it','2013-09-19');
+
+
+#SQOOP IMPORT FROM RDBMS TO HDFS : TO HIVE
+
+sqoop import --connect "jdbc:mysql://localhost/mysql_db"  --username root --password cloudera --split-by id  --columns id,cname,city,dept,doj --table student_data --target-dir home/cloudera/student_data --fields-terminated-by "," --hive-import --create-hive-table --hive-table sampledata.student_data
+
+drop table if exists student_part;
+create table if not exists student_part(
+id int,
+cname string,
+city string,
+dept string)
+PARTITIONED BY (doj DATE)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+SET hive.exec.dynamic.partition = true;
+SET hive.exec.dynamic.partition.mode = nonstrict;
+
+insert into table student_part partition(doj) select * from student_data;
+

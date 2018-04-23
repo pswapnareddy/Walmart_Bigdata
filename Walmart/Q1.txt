@@ -1,0 +1,21 @@
+1)DOWNLOAD SOME TEXT(.TXT) FILE AND LOAD IT TO HIVE EXTERNAL TABLE
+#download text file 
+sample.txt 
+cat sample.txt
+
+# hive 
+create database sampledata;
+create table sample_lake;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS sample_lake( Sample string, Pond String,
+Sampling_site String, Sampling_date date)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS TEXTFILE 
+tblproperties('skip.header.line.count'='1');
+
+# load data from local to hive
+load data local inpath 'Downloads/sample.txt' into table sample_lake;
+
+#see contents in table
+select * from sample_lake;

@@ -1,0 +1,27 @@
+
+import wget
+wget.download('http://mysafeinfo.com/api/data?list=englishmonarchs&format=json',my_data.json)
+wget.download('http://insight.dev.schoolwires.com/HelpAssets/C2Assets/C2Files/C2ImportCalEventSample.csv',my_data.csv)
+wget.download('https://www-odi.nhtsa.dot.gov/downloads/folders/Complaints/CMPL.txt',my_data.txt)
+
+# Load data from json file into DF.
+
+json_df = sqlContext.read.json("file:///home/user/my_data.json")
+
+json_df.write.mode("overwrite").format("orc").saveAsTable("default.json_data")
+
+# Load data from csv file into DF.
+
+csv_df = sqlContext.read.format('com.databricks.spark.csv').options(header='true').load("file:///home/user/my_data.csv")
+
+csv_df.write.mode("overwrite").format("orc").saveAsTable("default.csv_data")
+
+# Load data from txt file into rdd.
+
+text_rdd = sc.textFile("file:///home/user/my_data.txt")
+
+schema = StructType([StructField("name", StringType(), True),StructField("age", IntegerType(), True)])
+
+text_df = sqlContext.createDataFrame(text_rdd, schema)
+
+text_df.write.mode("overwrite").format("orc").saveAsTable("default.csv_data")
